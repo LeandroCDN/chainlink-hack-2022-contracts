@@ -1,13 +1,11 @@
-# Sample Hardhat Project
+# chainlink-hack-2022-contracts
+Smart Contracts for chainlink hackaton 2022
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+## used tech
+@Hardhat 
+@Chainlink
+@OpenZeppelin
 
-Try running some of the following tasks:
 
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.js
-```
+## Notion Brain project
+https://duckdev.notion.site/ChainLink-Hack-64dc8c61986b44b0851bfda05175f9d4
