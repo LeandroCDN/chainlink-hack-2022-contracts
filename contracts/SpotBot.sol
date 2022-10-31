@@ -52,7 +52,7 @@ contract SpotBot is AccessControl, Swap {
   }
 
   //------------------ PUBLIC FUNCTIONS ------------------
-  function buy(address _ownerGrid) public onlyRole(ADMIN_ROLE){
+  function buy() public onlyRole(ADMIN_ROLE){
     uint balance = getBalanceStable();
     require(balance > 0, "Next movement is sell, dont but now");
     bool canExec = _getPrice() <= getBuyPrice();
@@ -60,7 +60,7 @@ contract SpotBot is AccessControl, Swap {
 
     swapExactInputSingle(balance, address(this), address(stableCoin), address(tradeableToken));
   }
-  function sell(address _ownerGrid) public onlyRole(ADMIN_ROLE){
+  function sell() public onlyRole(ADMIN_ROLE){
     uint balance = getBalanceStable();
     require(balance <= 0, "Next movement is sell, dont but now");
     bool canExec = _getPrice() >= getBuyPrice();
