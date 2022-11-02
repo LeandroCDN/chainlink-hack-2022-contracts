@@ -7,14 +7,16 @@ pragma solidity ^0.8.8;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import {AutomationRegistryInterface, State, Config} from "@chainlink/contracts/src/v0.8/interfaces/AutomationRegistryInterface1_2.sol";
 import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol"; 
+import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
 import "./interfaces/ISpotGrid.sol";
 
-contract AutomateGrids is AccessControl {
+contract AutomateGrids is AccessControl,  AutomationCompatible {
   bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
   address[] public listOfGrid;
-  uint maxGridMange = 5;
+  uint public maxGridMange = 5;
 
-  constructor() {
+  constructor(address grid) {
+    listOfGrid.push(grid);
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     _grantRole(ADMIN_ROLE, msg.sender);
   }
@@ -24,43 +26,51 @@ contract AutomateGrids is AccessControl {
     listOfGrid.push(spotBotGrid);
   }
 
-  function checkUpkeep(bytes calldata)
+  function checkUpkeep(bytes calldata checkData)
     external 
     view 
+    override
     returns (bool upkeepNeeded, bytes memory performData)
     {
-      uint[5] memory checkData; //0 nathing to do - 1 buy - 2sell
+      uint[5] memory action; //0 nathing to do - 1 buy - 2sell
+
       for (uint i; i < listOfGrid.length; i++){
-      ISpotGrid grid = ISpotGrid(listOfGrid[i]);
-      bool buy = grid.canBuy();
-      bool sell = grid.canBuy();
-      if(buy){
-        checkData[i] = 1;
-        upkeepNeeded = true;
-      }
-      if(sell){
-        checkData[i] = 2;
-        upkeepNeeded = true;
-      }
+        ISpotGrid grid = ISpotGrid(listOfGrid[i]);
+        
+        bool buy = grid.canBuy();
+        bool sell = grid.canSell();
+        if(buy){
+            action[i] = 1;
+            upkeepNeeded = true;
+        }
+        if(sell){
+            action[i] = 2;
+            upkeepNeeded = true;
+        }
     }
-    performData = abi.encode(checkData);
+    performData = abi.encode(action);
     return(upkeepNeeded,performData);
   }
 
-  function performUpkeep(bytes calldata performData) public {
-    uint[5] memory checkData = abi.decode(performData,( uint[5]));
+  function performUpkeep(bytes calldata _performData) external override{
+    (uint[5] memory action) = abi.decode(_performData,( uint[5]));
 
     for (uint i; i < listOfGrid.length; i++){
       ISpotGrid grid = ISpotGrid(listOfGrid[i]);
 
-      if(checkData[i] == 1){
+      if(action[i] == 1){
         grid.buy();
       }
       
-      if(checkData[i] == 2){
+      if(action[i] == 2){
         grid.sell();
       }
     }
   }
-
+  function getLength() public view returns(uint){
+    return listOfGrid.length;
+  }
+  function getMaxGridsUnderManage() public view returns(uint){
+    return maxGridMange;
+  }
 } 

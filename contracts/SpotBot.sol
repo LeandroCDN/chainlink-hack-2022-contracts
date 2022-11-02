@@ -55,7 +55,7 @@ contract SpotBot is AccessControl, Swap {
   function buy() public {
     uint balance = getBalanceStable();
     require(balance > 0, "Next movement is sell, dont but now");
-    bool canExec = _getPrice() >= getBuyPrice();
+    bool canExec = _getPrice() <= getBuyPrice();
     require(canExec, "Over price to buy");
 
     swapExactInputSingle(balance, address(this), address(stableCoin), address(tradeableToken));
@@ -64,10 +64,10 @@ contract SpotBot is AccessControl, Swap {
   function sell() public  {
     uint balance = getBalanceStable();
     require(balance <= 0, "Next movement is sell, dont but now");
-    bool canExec = _getPrice() <= getSellPrice();
+    bool canExec = _getPrice() >= getSellPrice();
     require(canExec, "Under price to sell");
 
-    swapExactInputSingle(balance, address(this), address(tradeableToken), address(stableCoin));
+    swapExactInputSingle(getBalanceTradeableToken(), address(this), address(tradeableToken), address(stableCoin));
   }
 
   function editPriceToBuy(uint newBuyPrice) public {
@@ -113,7 +113,7 @@ contract SpotBot is AccessControl, Swap {
     uint balance = getBalanceStable();
     bool canExec = false;
     if(balance > 0){
-     canExec = _getPrice() >= getBuyPrice();
+     canExec = _getPrice() <= getBuyPrice();
     }
    
     return canExec;
@@ -123,7 +123,7 @@ contract SpotBot is AccessControl, Swap {
     uint balance = getBalanceStable();
     bool canExec = false;
     if(balance <= 0){
-      canExec = _getPrice() <= getSellPrice();
+      canExec = _getPrice() >= getSellPrice();
     }
     
     return canExec;
