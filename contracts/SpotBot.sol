@@ -52,21 +52,29 @@ contract SpotBot is AccessControl, Swap {
   }
 
   //------------------ PUBLIC FUNCTIONS ------------------
-  function buy() public onlyRole(ADMIN_ROLE){
+  function buy() public {
     uint balance = getBalanceStable();
     require(balance > 0, "Next movement is sell, dont but now");
-    bool canExec = _getPrice() <= getBuyPrice();
+    bool canExec = _getPrice() >= getBuyPrice();
     require(canExec, "Over price to buy");
 
     swapExactInputSingle(balance, address(this), address(stableCoin), address(tradeableToken));
   }
-  function sell() public onlyRole(ADMIN_ROLE){
+  
+  function sell() public  {
     uint balance = getBalanceStable();
     require(balance <= 0, "Next movement is sell, dont but now");
-    bool canExec = _getPrice() >= getBuyPrice();
+    bool canExec = _getPrice() <= getSellPrice();
     require(canExec, "Under price to sell");
 
     swapExactInputSingle(balance, address(this), address(tradeableToken), address(stableCoin));
+  }
+
+  function editPriceToBuy(uint newBuyPrice) public {
+    data.buyPrice = newBuyPrice;
+  }
+  function editPriceTosell(uint newSellPrice) public {
+    data.sellPrice = newSellPrice;
   }
 
   function withdraw() public onlyRole(ADMIN_ROLE){
@@ -89,6 +97,9 @@ contract SpotBot is AccessControl, Swap {
   function getBuyPrice()public view returns(uint){
     return data.buyPrice;
   }
+  function getSellPrice()public view returns(uint){
+    return data.sellPrice;
+  }
 
   //if return true => waitingBuy |  if return false => waitingSell
   function getBalanceStable() public view returns(uint){
@@ -98,6 +109,25 @@ contract SpotBot is AccessControl, Swap {
     return tradeableToken.balanceOf(address(this));
   }
 
+  function canBuy() public view returns(bool){
+    uint balance = getBalanceStable();
+    bool canExec = false;
+    if(balance > 0){
+     canExec = _getPrice() >= getBuyPrice();
+    }
+   
+    return canExec;
+  }
+
+  function canSell() public view returns(bool){
+    uint balance = getBalanceStable();
+    bool canExec = false;
+    if(balance <= 0){
+      canExec = _getPrice() <= getSellPrice();
+    }
+    
+    return canExec;
+  }
 
   // ------------------ PRIVATE FUNCTIONS ------------------ -> public for tests
   function _getPrice() public view returns (uint){

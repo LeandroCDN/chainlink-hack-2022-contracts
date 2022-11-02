@@ -6,7 +6,7 @@ async function main() {
     const stableCoin_= "0xD6920eeAF9b9bc7288765F72B4d6Da3e47308464";       // address
     const tradeableToken_= "0x8cdA7F95298418Bb6b5e424c1EEE4B18a0C1139C";    //address
     const dataFeed_= "0x007A22900a3B98143368Bd5906f8E17e9867581b";          //address
-    const buyPrice_= "2058014769344";          //uint
+    const buyPrice_= "2028014769344";          //uint
     const sellPrice_= "2000000000000";         //uint
     const initialAmount_= "100000000000000000000";     //uint
     const ownerOfBot_= deployer.address;        //address
