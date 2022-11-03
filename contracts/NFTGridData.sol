@@ -13,11 +13,12 @@ contract NFTGridData is ERC721, ERC721URIStorage, Ownable {
 
     constructor() ERC721("NFTGridData", "NGD") {}
 
-    function safeMint(address to, string memory uri) public onlyOwner {
+    function safeMint(address to, string memory uri) public onlyOwner returns(uint){
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
+        return tokenId;
     }
 
     // The following functions are overrides required by Solidity.

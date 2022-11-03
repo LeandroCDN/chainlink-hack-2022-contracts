@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol"; // to get price link
 import "./SpotBot.sol";
+import "./UpkeepIDRegisterFactory.sol";
+
 import "./interfaces/INFTGridData.sol";
 
 
@@ -15,10 +17,18 @@ contract GridBotFactory is AccessControl {
   
   INFTGridData nftGrid;
   AggregatorV3Interface dataFeed;
+  UpkeepIDRegisterFactory registerKeeps;
   IERC20 public currency;
 
+  struct userData{
+    address gridBotAddress;
+    uint nftID;
+    uint buyPrice_;
+    uint sellPrice_;
+  }
+
   address[] public listOfAllGrid;
-  mapping(address => address[]) public listOfGridsPerUser;
+  mapping(address => userData[]) public listOfGridsPerUser;
 
   constructor(address _NFTGridData) {
     nftGrid = INFTGridData(_NFTGridData);
@@ -27,11 +37,13 @@ contract GridBotFactory is AccessControl {
   }
 
   function factoryNewGrid(
+    string memory name,
     string memory uri_,
     address tradeableToken_,
     uint buyPrice_,
     uint sellPrice_,
     address owner_
+
   ) public payable {
     address newGrid = address(new SpotBot(
       address(currency),
@@ -43,12 +55,18 @@ contract GridBotFactory is AccessControl {
       owner_,
       0xE592427A0AEce92De3Edee1F18E0157C05861564
     ));
-
-    listOfGridsPerUser[owner_].push(newGrid);
+    
+     
     listOfAllGrid.push(newGrid);
     totalGrids++;
+    registerKeeps.checkAndResolve( newGrid, name);
+    uint id = nftGrid.safeMint(owner_,uri_);
+    
+    listOfGridsPerUser[owner_].push(userData(newGrid,id,buyPrice_,sellPrice_));
+  }
 
-    nftGrid.safeMint(owner_,uri_);
+  function getTotalNumberOfGrid(address _user)public view returns(uint){
+    return listOfGridsPerUser[_user].length;
   }
 
 }

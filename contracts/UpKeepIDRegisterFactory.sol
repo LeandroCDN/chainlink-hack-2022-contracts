@@ -37,6 +37,7 @@ contract UpkeepIDRegisterFactory {
   AutomationRegistryInterface public immutable i_registry;
   bytes4 registerSig = KeeperRegistrarInterface.register.selector;
   
+  address ownerOfGrids;
   uint public numberOfAutomateGrids;
   address[] public AutomateGridsList;
   uint256[] public ids;
@@ -52,30 +53,25 @@ contract UpkeepIDRegisterFactory {
   }
 
   function registerAndPredictID(
-    string memory name,
-    bytes calldata encryptedEmail,
-    address upkeepContract,
-    uint32 gasLimit,
-    address adminAddress,
-    bytes calldata checkData,
-    uint96 amount,
-    uint8 source
+    string memory name,    
+    address upkeepContract,    
+    address adminAddress       
   ) public {
     (State memory state, Config memory _c, address[] memory _k) = i_registry.getState();
     uint256 oldNonce = state.nonce;
     bytes memory payload = abi.encode(
       name,
-      encryptedEmail,
+      '0x',
       upkeepContract,
-      gasLimit,
+      999999,
       adminAddress,
-      checkData,
-      amount,
-      source,
+      'ox',
+      5 ether,
+      0,
       address(this)
     );
     
-    i_link.transferAndCall(registrar, amount, bytes.concat(registerSig, payload));
+    i_link.transferAndCall(registrar, 5 ether, bytes.concat(registerSig, payload));
     (state, _c, _k) = i_registry.getState();
     uint256 newNonce = state.nonce;
     if (newNonce == oldNonce + 1) {
@@ -89,7 +85,10 @@ contract UpkeepIDRegisterFactory {
     }
   }
 
-  function checkAndResolve(address spotBotGrid)public {
+  function checkAndResolve(
+    string memory name,     
+    address spotBotGrid    
+    )public {
     bool canManageNewGrid = checkLastAutomateGridState();
     if(canManageNewGrid){
       AutomateGrids lastAutomateGrid = AutomateGrids(AutomateGridsList[AutomateGridsList.length-1]);
@@ -97,7 +96,11 @@ contract UpkeepIDRegisterFactory {
     }else{
       address newAutomatedGrids = address(new AutomateGrids(spotBotGrid));
       AutomateGridsList.push(newAutomatedGrids);
-      //registerAndPredictID
+      registerAndPredictID(
+        name,
+        newAutomatedGrids,
+        ownerOfGrids
+      );
     }
   }
 

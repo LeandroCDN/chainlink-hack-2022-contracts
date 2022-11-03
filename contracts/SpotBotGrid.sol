@@ -14,7 +14,7 @@ import "./utils/Swap.sol";
 *  Two points : BuyPoint (uses all usdc in this contract) and SellPoint(uses all asset in this contract)
 */
 
-contract SpotBot is AccessControl, Swap {
+contract SpotBotGrid is AccessControl, Swap {
 
   struct userData{
     uint buyPrice; //In 8 decimals! For chainlink datafeed
