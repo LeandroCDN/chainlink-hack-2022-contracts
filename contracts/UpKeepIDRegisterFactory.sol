@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
+// Link token : 0x326C977E6efc84E512bB9C30f76E30c160eD06FB
 // Registrar Address: 0xDb8e8e2ccb5C033938736aa89Fe4fa1eDfD15a1d
 // Registry address: 0x02777053d6764996e594c3E88AF1D58D5363a2e6	
 
@@ -37,7 +38,7 @@ contract UpkeepIDRegisterFactory {
   AutomationRegistryInterface public immutable i_registry;
   bytes4 registerSig = KeeperRegistrarInterface.register.selector;
   
-  address ownerOfGrids;
+  address public ownerOfGrids;
   uint public numberOfAutomateGrids;
   address[] public AutomateGridsList;
   uint256[] public ids;
@@ -47,6 +48,7 @@ contract UpkeepIDRegisterFactory {
     address _registrar,
     AutomationRegistryInterface _registry
   ) {
+    ownerOfGrids = msg.sender;
     i_link = _link;
     registrar = _registrar;
     i_registry = _registry;
@@ -89,6 +91,7 @@ contract UpkeepIDRegisterFactory {
     string memory name,     
     address spotBotGrid    
     )public {
+      //require link balance in this contract
     bool canManageNewGrid = checkLastAutomateGridState();
     if(canManageNewGrid){
       AutomateGrids lastAutomateGrid = AutomateGrids(AutomateGridsList[AutomateGridsList.length-1]);
@@ -107,15 +110,21 @@ contract UpkeepIDRegisterFactory {
 
   //check if lastAutomatedGrid is open to manage a new gridbot
   function checkLastAutomateGridState() public view returns(bool){
-    AutomateGrids lastAutomateGrid = AutomateGrids(AutomateGridsList[AutomateGridsList.length-1]);
-
-    uint maxGridMange = lastAutomateGrid.getMaxGridsUnderManage();
-    uint length = lastAutomateGrid.getLength();
     bool canManageNewGrid;
+    if(numberOfAutomateGrids >= 1){
+      AutomateGrids lastAutomateGrid = AutomateGrids(AutomateGridsList[AutomateGridsList.length-1]);
 
-    if(length<maxGridMange){
-      canManageNewGrid=true;
+      uint maxGridMange = lastAutomateGrid.getMaxGridsUnderManage();
+      uint length = lastAutomateGrid.getLength();
+
+      if(length<maxGridMange){
+        canManageNewGrid=true;
+      }
     }
     return canManageNewGrid;
+  }
+
+  function withdrawLinks()public {
+    i_link.transfer(msg.sender, i_link.balanceOf(address(this)));
   }
 }

@@ -31,22 +31,22 @@ contract AutomateGrids is AccessControl,  AutomationCompatible {
     view 
     override
     returns (bool upkeepNeeded, bytes memory performData)
-    {
-      uint[5] memory action; //0 nathing to do - 1 buy - 2sell
+  {
+    uint[5] memory action; //0 nathing to do - 1 buy - 2sell
 
-      for (uint i; i < listOfGrid.length; i++){
-        ISpotGrid grid = ISpotGrid(listOfGrid[i]);
-        
-        bool buy = grid.canBuy();
-        bool sell = grid.canSell();
-        if(buy){
-            action[i] = 1;
-            upkeepNeeded = true;
-        }
-        if(sell){
-            action[i] = 2;
-            upkeepNeeded = true;
-        }
+    for (uint i; i < listOfGrid.length; i++){
+      ISpotGrid grid = ISpotGrid(listOfGrid[i]);
+      
+      bool buy = grid.canBuy();
+      bool sell = grid.canSell();
+      if(buy){
+          action[i] = 1;
+          upkeepNeeded = true;
+      }
+      if(sell){
+          action[i] = 2;
+          upkeepNeeded = true;
+      }
     }
     performData = abi.encode(action);
     return(upkeepNeeded,performData);

@@ -5,8 +5,8 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol"; // to get price link
-import "./SpotBot.sol";
-import "./UpkeepIDRegisterFactory.sol";
+import "./SpotBotGrid.sol";
+import "./UpKeepIDRegisterFactory.sol";
 
 import "./interfaces/INFTGridData.sol";
 
@@ -30,8 +30,10 @@ contract GridBotFactory is AccessControl {
   address[] public listOfAllGrid;
   mapping(address => userData[]) public listOfGridsPerUser;
 
-  constructor(address _NFTGridData) {
+  constructor(address _NFTGridData, address _currency, address _registerKeeps) {
+    currency = IERC20(_currency);
     nftGrid = INFTGridData(_NFTGridData);
+    registerKeeps = UpkeepIDRegisterFactory(_registerKeeps);
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     _grantRole(ADMIN, msg.sender);
   }
@@ -43,9 +45,9 @@ contract GridBotFactory is AccessControl {
     uint buyPrice_,
     uint sellPrice_,
     address owner_
-
+//cost 1 link + 1usd
   ) public payable {
-    address newGrid = address(new SpotBot(
+      address newGrid = address(new SpotBotGrid(
       address(currency),
       tradeableToken_,
       0x007A22900a3B98143368Bd5906f8E17e9867581b, // Datafeed btc/usd mumbai
@@ -59,7 +61,7 @@ contract GridBotFactory is AccessControl {
      
     listOfAllGrid.push(newGrid);
     totalGrids++;
-    registerKeeps.checkAndResolve( newGrid, name);
+    registerKeeps.checkAndResolve(name, newGrid );
     uint id = nftGrid.safeMint(owner_,uri_);
     
     listOfGridsPerUser[owner_].push(userData(newGrid,id,buyPrice_,sellPrice_));
