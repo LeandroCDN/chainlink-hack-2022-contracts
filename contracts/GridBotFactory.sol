@@ -17,7 +17,7 @@ contract GridBotFactory is AccessControl {
   
   INFTGridData nftGrid;
   AggregatorV3Interface dataFeed;
-  UpkeepIDRegisterFactory registerKeeps;
+  UpKeepIDRegisterFactory registerKeeps;
   IERC20 public currency;
 
   struct userData{
@@ -33,7 +33,7 @@ contract GridBotFactory is AccessControl {
   constructor(address _NFTGridData, address _currency, address _registerKeeps) {
     currency = IERC20(_currency);
     nftGrid = INFTGridData(_NFTGridData);
-    registerKeeps = UpkeepIDRegisterFactory(_registerKeeps);
+    registerKeeps = UpKeepIDRegisterFactory(_registerKeeps);
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     _grantRole(ADMIN, msg.sender);
   }

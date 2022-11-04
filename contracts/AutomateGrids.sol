@@ -15,18 +15,18 @@ contract AutomateGrids is AccessControl,  AutomationCompatible {
   address[] public listOfGrid;
   uint public maxGridMange = 5;
 
-  constructor(address grid) {
+  constructor(address grid, address adminOfPush) {
     listOfGrid.push(grid);
-    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    _grantRole(ADMIN_ROLE, msg.sender);
+    _grantRole(DEFAULT_ADMIN_ROLE, adminOfPush);
+    _grantRole(ADMIN_ROLE, adminOfPush);
   }
 
-  function pushNewGrid(address spotBotGrid) public onlyRole(ADMIN_ROLE){
+  function pushNewGrid(address spotBotGrid) public {
     require(listOfGrid.length <= maxGridMange, "Max of grids" );
     listOfGrid.push(spotBotGrid);
   }
 
-  function checkUpkeep(bytes calldata checkData)
+  function checkUpkeep(bytes calldata /*checkData*/)
     external 
     view 
     override

@@ -32,7 +32,7 @@ interface KeeperRegistrarInterface {
   ) external;
 }
 
-contract UpkeepIDRegisterFactory {
+contract UpKeepIDRegisterFactory {
   LinkTokenInterface public immutable i_link;
   address public immutable registrar;
   AutomationRegistryInterface public immutable i_registry;
@@ -96,14 +96,17 @@ contract UpkeepIDRegisterFactory {
     if(canManageNewGrid){
       AutomateGrids lastAutomateGrid = AutomateGrids(AutomateGridsList[AutomateGridsList.length-1]);
       lastAutomateGrid.pushNewGrid(spotBotGrid);
+      numberOfAutomateGrids++;
     }else{
-      address newAutomatedGrids = address(new AutomateGrids(spotBotGrid));
+      address newAutomatedGrids = address(new AutomateGrids(spotBotGrid, address(this)));
       AutomateGridsList.push(newAutomatedGrids);
       registerAndPredictID(
         name,
         newAutomatedGrids,
         ownerOfGrids
       );
+      numberOfAutomateGrids++;
+
     }
   }
 
