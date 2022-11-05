@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/* 
+* SuperAdminRole :nft -> changeOwner
+* House Role: Pauses, and give back funds
+
+* Especial Function: nft id sistem - 
+*/
+
 //for wrapped tokens
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./utils/Swap.sol";
@@ -22,12 +30,17 @@ contract SpotBotGrid is AccessControl, Swap {
     uint initialAmount;
     address admin;
   }
-  bool paused;
+  bool public paused;
+  uint public id;
 
   bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+  bytes32 public constant HOUSE_ROLE = keccak256("HOUSE_ROLE");
+  address public house;
 
   IERC20 stableCoin; // Need One Stable!
   IERC20 tradeableToken;
+  IERC721 nft; //PUT AND ADDRESS HERE!
+
   AggregatorV3Interface dataFeed;
   userData data;
 
@@ -40,15 +53,17 @@ contract SpotBotGrid is AccessControl, Swap {
     uint sellPrice_,
     uint initialAmount_,
     address ownerOfBot_,
-    address _swapRouter
+    address _swapRouter,
+    uint _id
   ) Swap(_swapRouter){
     stableCoin = IERC20(stableCoin_);
     tradeableToken = IERC20(tradeableToken_);
     dataFeed = AggregatorV3Interface(dataFeed_);
     data = userData(buyPrice_, sellPrice_, initialAmount_, ownerOfBot_);
-
-    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    _grantRole(ADMIN_ROLE, msg.sender);
+    id = _id;
+    //_grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    _grantRole(ADMIN_ROLE, address(nft) );
+    _grantRole(HOUSE_ROLE, house );
   }
 
   //------------------ PUBLIC FUNCTIONS ------------------
@@ -71,13 +86,16 @@ contract SpotBotGrid is AccessControl, Swap {
   }
 
   function editPriceToBuy(uint newBuyPrice) public {
+    require(nft.ownerOf(id) == msg.sender, "Only owner of id can edit prices");
     data.buyPrice = newBuyPrice;
   }
   function editPriceTosell(uint newSellPrice) public {
+    require(nft.ownerOf(id) == msg.sender, "Only owner of id can edit prices");
     data.sellPrice = newSellPrice;
   }
 
-  function withdraw() public onlyRole(ADMIN_ROLE){
+  function withdraw() public {
+    require(nft.ownerOf(id) == msg.sender, "Only owner of id can withdraw funds");
     uint balanceStable = getBalanceStable();
     uint balanceTradeableToken = getBalanceTradeableToken();
 
@@ -89,8 +107,12 @@ contract SpotBotGrid is AccessControl, Swap {
     }
   }
   
-  function togglePause() public onlyRole(ADMIN_ROLE){
+  function togglePause() public onlyRole(HOUSE_ROLE){
     paused = !paused;
+  }
+
+  function changeOwnerBot(address newOwner) external onlyRole(ADMIN_ROLE){
+    data.admin = newOwner;
   }
 
   // ------------------ VIEW FUNCTIONS ------------------
@@ -127,6 +149,10 @@ contract SpotBotGrid is AccessControl, Swap {
     }
     
     return canExec;
+  }
+
+  function owner()public view returns(address){
+    return data.admin;
   }
 
   // ------------------ PRIVATE FUNCTIONS ------------------ -> public for tests

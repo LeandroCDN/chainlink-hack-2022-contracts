@@ -1,34 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-//for wrapped tokens
+
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol"; // to get price link
 import "./SpotBotGrid.sol";
 import "./UpKeepIDRegisterFactory.sol";
-
 import "./interfaces/INFTGridData.sol";
 
 
 contract GridBotFactory is AccessControl {
   bytes32 public constant ADMIN = keccak256("ADMIN");
   uint public totalGrids;
+  address[] public listOfAllGrid;
+  struct userData{
+    address gridBotAddress;
+    uint nftID;    
+  }
+
+  mapping(address => userData[]) public listOfGridsPerUser;
   
   INFTGridData nftGrid;
   AggregatorV3Interface dataFeed;
   UpKeepIDRegisterFactory registerKeeps;
   IERC20 public currency;
 
-  struct userData{
-    address gridBotAddress;
-    uint nftID;
-    uint buyPrice_;
-    uint sellPrice_;
-  }
-
-  address[] public listOfAllGrid;
-  mapping(address => userData[]) public listOfGridsPerUser;
 
   constructor(address _NFTGridData, address _currency, address _registerKeeps) {
     currency = IERC20(_currency);
@@ -45,30 +42,54 @@ contract GridBotFactory is AccessControl {
     uint buyPrice_,
     uint sellPrice_,
     address owner_
-//cost 1 link + 1usd
   ) public payable {
-      address newGrid = address(new SpotBotGrid(
-      address(currency),
-      tradeableToken_,
-      0x007A22900a3B98143368Bd5906f8E17e9867581b, // Datafeed btc/usd mumbai
-      buyPrice_,
-      sellPrice_,
-      0,
-      owner_,
-      0xE592427A0AEce92De3Edee1F18E0157C05861564
-    ));
-    
-     
-    listOfAllGrid.push(newGrid);
-    totalGrids++;
+    uint id = nftGrid.getCurrentId();
+
+    address newGrid = _newGrid(tradeableToken_, buyPrice_, sellPrice_, owner_, id); 
     registerKeeps.checkAndResolve(name, newGrid );
-    uint id = nftGrid.safeMint(owner_,uri_);
+    nftGrid.safeMint(owner_, uri_, newGrid);
     
-    listOfGridsPerUser[owner_].push(userData(newGrid,id,buyPrice_,sellPrice_));
+    _updateData(newGrid,id,owner_);
   }
+
+  function changeOwnerOfNFT(address newOwner)public onlyRole(ADMIN){
+    nftGrid.transferOwnership(newOwner);
+  }
+
+  // --------------------------------- VIEW FUNCTIONS ---------------------------------
 
   function getTotalNumberOfGrid(address _user)public view returns(uint){
     return listOfGridsPerUser[_user].length;
   }
 
+  function getGridDataPerUser(address _user, uint index)public view returns(address , uint nftID, uint buyPrice, uint sellPrice){
+    SpotBotGrid grid = SpotBotGrid(listOfGridsPerUser[_user][index].gridBotAddress);
+    nftID = listOfGridsPerUser[_user][index].nftID;
+    buyPrice = grid.getBuyPrice();
+    sellPrice = grid.getBuyPrice();
+
+    return(address(grid), nftID, buyPrice, sellPrice);
+  }
+
+
+  // --------------------------------- INTERNAL FUNCTIONS ---------------------------------
+
+  function _newGrid(address _tradeableToken, uint _buyPrice, uint _sellPrice, address _owner, uint id) internal returns(address newGrid){
+    newGrid = address(new SpotBotGrid(
+      address(currency),
+      _tradeableToken,
+      0x007A22900a3B98143368Bd5906f8E17e9867581b, // Datafeed btc/usd mumbai
+      _buyPrice,
+      _sellPrice,
+      0,
+      _owner,
+      0xE592427A0AEce92De3Edee1F18E0157C05861564,
+      id
+    ));
+  }
+  function _updateData(address _grid, uint _id,address _owner) internal {
+    listOfAllGrid.push(_grid);
+    totalGrids++;
+    listOfGridsPerUser[_owner].push(userData(_grid, _id));
+  }
 }

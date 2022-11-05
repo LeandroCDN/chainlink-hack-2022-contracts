@@ -14,4 +14,6 @@ interface ISpotGrid {
 
    function canBuy() external view returns(bool);
    function canSell() external view returns(bool);
+
+   function changeOwnerBot(address newOwner) external;
 }

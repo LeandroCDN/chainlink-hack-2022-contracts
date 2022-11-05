@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 interface INFTGridData {
     
 
-  function safeMint(address to, string memory uri) external returns(uint);
-
-    
+  function safeMint(address to, string memory uri, address gridAddress) external;
+  function getCurrentId() external view returns(uint);
+  function transferOwnership(address newOwner) external;  
 }
