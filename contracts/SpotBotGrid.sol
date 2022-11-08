@@ -32,6 +32,7 @@ contract SpotBotGrid is AccessControl, Swap {
   }
   bool public paused;
   uint public id;
+  uint public totalSwaps;
 
   bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
   bytes32 public constant HOUSE_ROLE = keccak256("HOUSE_ROLE");
@@ -66,13 +67,16 @@ contract SpotBotGrid is AccessControl, Swap {
     _grantRole(HOUSE_ROLE, house );
   }
 
-  //------------------ PUBLIC FUNCTIONS ------------------
+  // ------------------------------------ PUBLIC FUNCTIONS ------------------------------------
   function buy() public {
     uint balance = getBalanceStable();
     require(balance > 0, "Next movement is sell, dont but now");
     bool canExec = _getPrice() <= getBuyPrice();
     require(canExec, "Over price to buy");
-
+    if(data.initialAmount == 0){
+      data.initialAmount = balance;
+    }
+    totalSwaps++;
     swapExactInputSingle(balance, address(this), address(stableCoin), address(tradeableToken));
   }
   
@@ -81,7 +85,7 @@ contract SpotBotGrid is AccessControl, Swap {
     require(balance <= 0, "Next movement is sell, dont but now");
     bool canExec = _getPrice() >= getSellPrice();
     require(canExec, "Under price to sell");
-
+    totalSwaps++;
     swapExactInputSingle(getBalanceTradeableToken(), address(this), address(tradeableToken), address(stableCoin));
   }
 
@@ -115,7 +119,7 @@ contract SpotBotGrid is AccessControl, Swap {
     data.admin = newOwner;
   }
 
-  // ------------------ VIEW FUNCTIONS ------------------
+  // ------------------------------------ VIEW FUNCTIONS ------------------------------------
   function getBuyPrice()public view returns(uint){
     return data.buyPrice;
   }
@@ -137,7 +141,7 @@ contract SpotBotGrid is AccessControl, Swap {
     if(balance > 0){
      canExec = _getPrice() <= getBuyPrice();
     }
-   
+    
     return canExec;
   }
 
@@ -153,6 +157,31 @@ contract SpotBotGrid is AccessControl, Swap {
 
   function owner()public view returns(address){
     return data.admin;
+  }
+  function getTradeableTokenAddress() public view returns(address){
+    return address(tradeableToken);
+  }
+
+  function gridProfitPerSell() public view returns(uint){
+    uint buyP = data.buyPrice;
+    uint sellP = data.sellPrice;
+    require(sellP>buyP);
+    return ((sellP-buyP)*100)/buyP;
+  }
+  function gridTotalProfit() public view returns(int profit){
+    uint balance = getBalanceStable();
+    uint initialBalance =data.initialAmount;
+
+    if(balance<0){
+      balance = getBalanceTradeableToken();
+      balance = balance * (_getPrice() * 10000000000);
+    }
+    if(initialBalance>balance){
+      profit = int(((balance - initialBalance)*100/initialBalance));
+    }else{
+      profit = (int(balance - initialBalance)*100/int(initialBalance));
+    }
+
   }
 
   // ------------------ PRIVATE FUNCTIONS ------------------ -> public for tests

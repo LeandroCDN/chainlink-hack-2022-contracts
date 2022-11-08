@@ -11,6 +11,7 @@ interface ISpotGrid {
   //if return true => waitingBuy |  if return false => waitingSell
   function getBalanceStable() external view returns(uint);
   function getBalanceTradeableToken() external view returns(uint);
+  function getTradeableTokenAddress() external view returns(address);
 
    function canBuy() external view returns(bool);
    function canSell() external view returns(bool);

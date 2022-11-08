@@ -7,11 +7,13 @@ import "./interfaces/ISpotGrid.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
+
 contract NFTGridData is ERC721, ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
     mapping(uint=>address) public botAddress;
+    
 
     constructor() ERC721("NFTGridData", "NGD") {}
 
@@ -36,9 +38,6 @@ contract NFTGridData is ERC721, ERC721URIStorage, Ownable {
         grid.changeOwnerBot(to);
         super._beforeTokenTransfer(from,to,tokenId);
     }
-
-
-
 
 
     // The following functions are overrides required by Solidity.

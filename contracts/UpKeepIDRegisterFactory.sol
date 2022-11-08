@@ -127,7 +127,17 @@ contract UpKeepIDRegisterFactory {
     return canManageNewGrid;
   }
 
-  function withdrawLinks()public {
+  function withdrawLinks()public {   
     i_link.transfer(msg.sender, i_link.balanceOf(address(this)));
   }
+
+  function cancelKeepAndGiveBackFunds(uint id, address to)public {
+    i_registry.cancelUpkeep(id);
+    i_registry.withdrawFunds(id, to);
+  }
+
+  // ------------------------------------------ INTERNALS ------------------------------------------
+
+  // function cancelUpkeep(uint256 id) external;
+  //withdrawFunds 
 }
