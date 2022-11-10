@@ -10,6 +10,7 @@ import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/interfaces/LinkT
 import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
 import "./interfaces/ISpotGrid.sol";
 
+//v0.1
 contract AutomateGrids is AccessControl,  AutomationCompatible {
   bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
   address[] public listOfGrid;

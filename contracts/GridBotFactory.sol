@@ -8,8 +8,9 @@ import "./SpotBotGrid.sol";
 import "./UpKeepIDRegisterFactory.sol";
 import "./interfaces/INFTGridData.sol";
 
-contract GridBotFactory is AccessControl {
-  bytes32 public constant ADMIN = keccak256("ADMIN");
+//v0.1.001
+contract GridBotFactory  {
+  
   uint public totalGrids;
   address[] public listOfAllGrid;
   struct userData{
@@ -21,7 +22,7 @@ contract GridBotFactory is AccessControl {
   
   INFTGridData nftGrid;
   AggregatorV3Interface maticUsdFeed;
-  AggregatorV3Interface linkUsdFeed;
+  AggregatorV3Interface linkUsdFeed = AggregatorV3Interface(0x12162c3E810393dEC01362aBf156D7ecf6159528);
   UpKeepIDRegisterFactory registerKeeps;
   IERC20 public currency;
 
@@ -30,33 +31,42 @@ contract GridBotFactory is AccessControl {
     currency = IERC20(_currency);
     nftGrid = INFTGridData(_NFTGridData);
     registerKeeps = UpKeepIDRegisterFactory(_registerKeeps);
-    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    _grantRole(ADMIN, msg.sender);
+    
   }
 
   function factoryNewGrid(
     string memory name,
     string memory uri_,
-    address tradeableToken_,
-    uint buyPrice_,
-    uint sellPrice_,
-    address owner_
+    address tradeableToken,
+    uint buyPrice,
+    uint sellPrice,
+    address owner
   ) public payable {
-    require(msg.value >= (calculatePriceInMatic()/1000), "need more matic");
+    require(msg.value >= (calculatePriceInMatic() / 1000), "Need More matic");
     uint id = nftGrid.getCurrentId();
+    address newGrid = _newGrid(
+       tradeableToken,
+       buyPrice,
+       sellPrice, 
+       owner,
+       id
+    );   
 
-    address newGrid = _newGrid(tradeableToken_, buyPrice_, sellPrice_, owner_, id); 
     registerKeeps.checkAndResolve(name, newGrid );
-    nftGrid.safeMint(owner_, uri_, newGrid);
+    nftGrid.safeMint(owner, uri_, newGrid);
     
-    _updateData(newGrid,id,owner_);
+    _updateData(newGrid,id,owner);
   }
 
-  function changeOwnerOfNFT(address newOwner)public onlyRole(ADMIN){
+  function changeOwnerOfNFT(address newOwner)public{
     nftGrid.transferOwnership(newOwner);
   }
 
   // --------------------------------- VIEW FUNCTIONS ---------------------------------
+
+  function getNFTid() public view returns(uint){
+    return nftGrid.getCurrentId();
+  }
 
   function getTotalNumberOfGrid(address _user)public view returns(uint){
     return listOfGridsPerUser[_user].length;
@@ -66,11 +76,11 @@ contract GridBotFactory is AccessControl {
     address _user, 
     uint index
   )public view returns(
-    address,
+    address gridAddress,
     uint nftID,
     uint buyPrice,
     uint sellPrice,
-    address 
+    address tradeableToken
   ){
     SpotBotGrid grid = SpotBotGrid(listOfGridsPerUser[_user][index].gridBotAddress);
     nftID = listOfGridsPerUser[_user][index].nftID;
@@ -79,11 +89,24 @@ contract GridBotFactory is AccessControl {
 
     return(address(grid), nftID, buyPrice, sellPrice, grid.getTradeableTokenAddress());
   }
+  function getDataPerGrid(SpotBotGrid grid) public view returns(address, uint){
+    address owner = grid.owner();
+    uint lengt = getTotalNumberOfGrid(owner);
+    uint index;
+    if(lengt > 1){
+      for(uint i; i <lengt; i++){
+       if(listOfGridsPerUser[owner][i].gridBotAddress ==address(grid)) {
+        index = i;
+       }
+      }
+    }
+    return (owner,index);
+  }
 
   // --------------------------------- INTERNAL FUNCTIONS ---------------------------------
 
-  function _newGrid(address _tradeableToken, uint _buyPrice, uint _sellPrice, address _owner, uint id) internal returns(address newGrid){
-    newGrid = address(new SpotBotGrid(
+  function _newGrid(address _tradeableToken, uint _buyPrice, uint _sellPrice, address _owner, uint id) public returns(address){
+    address newGrid = address(new SpotBotGrid(
       address(currency),
       _tradeableToken,
       0x007A22900a3B98143368Bd5906f8E17e9867581b, // Datafeed btc/usd mumbai
@@ -94,9 +117,10 @@ contract GridBotFactory is AccessControl {
       0xE592427A0AEce92De3Edee1F18E0157C05861564, //swap router, can be constant in mainet
       id
     ));
+    return newGrid;
   }
 
-  function _updateData(address _grid, uint _id,address _owner) internal {
+  function _updateData(address _grid, uint _id,address _owner) public {
     listOfAllGrid.push(_grid);
     totalGrids++;
     listOfGridsPerUser[_owner].push(userData(_grid, _id));
@@ -105,10 +129,8 @@ contract GridBotFactory is AccessControl {
 
   function calculatePriceInMatic() public view returns(uint){
     uint linkPrice = _getPrice(linkUsdFeed);
-    uint maticPrice = _getPrice(maticUsdFeed)*10000000000;
-    uint cantInMatic = (linkPrice / maticPrice) * 1 ether;
 
-    return cantInMatic + 1 ether;
+    return linkPrice + 1 ether;
   }
 
   function _getPrice(AggregatorV3Interface dataFeed) public view returns (uint){

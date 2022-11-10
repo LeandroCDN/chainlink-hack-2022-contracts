@@ -14,27 +14,30 @@ async function main() {
   const _registrar = "0xDb8e8e2ccb5C033938736aa89Fe4fa1eDfD15a1d";
   const _registry = "0x02777053d6764996e594c3E88AF1D58D5363a2e6";
 
-  const NFTGridData = await hre.ethers.getContractFactory("NFTGridData");
-  const nftGridData = await NFTGridData.deploy();
-  await nftGridData.deployed();
+  const NFTGridDataAddress = "0xb9Cc0EEf94A3f76e7c03633379B0923b360F6DC9"
+  const upKeepIDRegisterFactoryAddress = "0xab3bEFaA67fb08234AFf4f1fE67bbd93349661D6"
+
+  // const NFTGridData = await hre.ethers.getContractFactory("NFTGridData");
+  // const nftGridData = await NFTGridData.deploy();
+  // await nftGridData.deployed();
   
-  const UpKeepIDRegisterFactory = await hre.ethers.getContractFactory("UpKeepIDRegisterFactory");
-  const upKeepIDRegisterFactory = await UpKeepIDRegisterFactory.deploy(_link,_registrar,_registry);
-  await upKeepIDRegisterFactory.deployed();
+  // const UpKeepIDRegisterFactory = await hre.ethers.getContractFactory("UpKeepIDRegisterFactory");
+  // const upKeepIDRegisterFactory = await UpKeepIDRegisterFactory.deploy(_link,_registrar,_registry);
+  // await upKeepIDRegisterFactory.deployed();
 
 
   const GridBotFactory = await hre.ethers.getContractFactory("GridBotFactory");
-  const gridBotFactory = await GridBotFactory.deploy(nftGridData.address,currency,upKeepIDRegisterFactory.address );
+  const gridBotFactory = await GridBotFactory.deploy(NFTGridDataAddress,currency,upKeepIDRegisterFactoryAddress );
   await gridBotFactory.deployed();
 
-  console.log(`  NFTGridData Address: ${nftGridData.address}`);
-  console.log(`  upKeepIDRegisterFactory Address: ${upKeepIDRegisterFactory.address}`);
+  // console.log(`  nftGridData Address: ${nftGridData.address}`);
+  // console.log(`  upKeepIDRegisterFactory Address: ${upKeepIDRegisterFactory.address}`);
   console.log(`  GridBotFactory Address: ${gridBotFactory.address}`);
 
   const WAIT_BLOCK_CONFIRMATION = 6;
-  await nftGridData.deployTransaction.wait(WAIT_BLOCK_CONFIRMATION);
+  // await nftGridData.deployTransaction.wait(WAIT_BLOCK_CONFIRMATION);
   await gridBotFactory.deployTransaction.wait(WAIT_BLOCK_CONFIRMATION);
-  await upKeepIDRegisterFactory.deployTransaction.wait(WAIT_BLOCK_CONFIRMATION);
+  // await upKeepIDRegisterFactory.deployTransaction.wait(WAIT_BLOCK_CONFIRMATION);
 
   console.log(`Verifying contract on Scan`);
 
@@ -43,29 +46,29 @@ async function main() {
   await run(`verify:verify`,{
     address: gridBotFactory.address,
     constructorArguments: [
-      nftGridData.address,
+      NFTGridDataAddress,
       currency,
-      upKeepIDRegisterFactory.address
+      upKeepIDRegisterFactoryAddress
     ],
     contract: "contracts/GridBotFactory.sol:GridBotFactory",
   })
   
+  // await run(`verify:verify`,{
+  //   address: nftGridData.address,
+  //   constructorArguments: [    
+  //   ],
+  //   contract: "contracts/NFTGridData.sol:NFTGridData",
+  // })
   
-  await run(`verify:verify`,{
-    address: upKeepIDRegisterFactory.address,
-    constructorArguments: [    
-      _link,
-      _registrar,
-      _registry
-    ],
-    contract: "contracts/UpKeepIDRegisterFactory.sol:UpKeepIDRegisterFactory",
-  })
-  await run(`verify:verify`,{
-    address: nftGridData.address,
-    constructorArguments: [    
-    ],
-    contract: "contracts/NFTGridData.sol:NFTGridData",
-  })
+  // await run(`verify:verify`,{
+  //   address: upKeepIDRegisterFactory.address,
+  //   constructorArguments: [    
+  //     _link,
+  //     _registrar,
+  //     _registry
+  //   ],
+  //   contract: "contracts/UpKeepIDRegisterFactory.sol:UpKeepIDRegisterFactory",
+  // })
   console.log(`\n\n END Script`);
 }
 

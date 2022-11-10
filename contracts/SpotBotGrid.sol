@@ -22,6 +22,7 @@ import "./utils/Swap.sol";
 *  Two points : BuyPoint (uses all usdc in this contract) and SellPoint(uses all asset in this contract)
 */
 
+//v0.1
 contract SpotBotGrid is AccessControl, Swap {
 
   struct userData{
@@ -31,16 +32,16 @@ contract SpotBotGrid is AccessControl, Swap {
     address admin;
   }
   bool public paused;
-  uint public id;
+  uint id;
   uint public totalSwaps;
 
   bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
   bytes32 public constant HOUSE_ROLE = keccak256("HOUSE_ROLE");
-  address public house;
+  address public house; //NEED HARDCORE ADDRESS
 
   IERC20 stableCoin; // Need One Stable!
   IERC20 tradeableToken;
-  IERC721 nft; //PUT AND ADDRESS HERE!
+  IERC721 nft = IERC721(0xb9Cc0EEf94A3f76e7c03633379B0923b360F6DC9); //PUT AND ADDRESS HERE!
 
   AggregatorV3Interface dataFeed;
   userData data;
@@ -183,6 +184,7 @@ contract SpotBotGrid is AccessControl, Swap {
     }
 
   }
+
 
   // ------------------ PRIVATE FUNCTIONS ------------------ -> public for tests
   function _getPrice() public view returns (uint){
