@@ -6,35 +6,17 @@ import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 
 contract Swap {
-    // For the scope of these swap examples,
-    // we will detail the design considerations when using
-    // `exactInput`, `exactInputSingle`, `exactOutput`, and  `exactOutputSingle`.
-
-    // It should be noted that for the sake of these examples, we purposefully pass in the swap router instead of inherit the swap router for simplicity.
-    // More advanced example contracts will detail how to inherit the swap router safely.
 
     ISwapRouter public immutable swapRouter;
-
-    // This example swaps DAI/WETH9 for single path swaps and DAI/WBTC/WETH9 for multi path swaps.
-
-    address public constant DAI = 0xCC70f801C1C73D9e699E874A434aab8E499005b7;
-    // address public constant WBTC = 0xCC70f801C1C73D9e699E874A434aab8E499005b7;
-    address public constant WETH9 = 0xCC70f801C1C73D9e699E874A434aab8E499005b7;
-
-    // For this example, we will set the pool fee to 0.3%.
-    uint24 public constant poolFee = 500; 
+    address public constant DAI = 0xCC70f801C1C73D9e699E874A434aab8E499005b7;    
+    address public constant WETH9 = 0xCC70f801C1C73D9e699E874A434aab8E499005b7;    
+    uint24 public constant poolFee = 500;
 
     constructor(address _swapRouter) {
         swapRouter = ISwapRouter(_swapRouter);
     }
 
-    /// @notice swapExactInputSingle swaps a fixed amount of DAI for a maximum possible amount of WETH9
-    /// using the DAI/WETH9 0.3% pool by calling `exactInputSingle` in the swap router.
-    /// @dev The calling address must approve this contract to spend at least `amountIn` worth of its DAI for this function to succeed.
-    /// @param amountIn The exact amount of DAI that will be swapped for WETH9.
-    /// @return amountOut The amount of WETH9 received.
-    function swapExactInputSingle(uint256 amountIn, address to, address tokenIn,address tokenOut) public returns (uint256 amountOut) {
-        
+    function swapExactInputSingle(uint256 amountIn, address to, address tokenIn,address tokenOut) internal returns (uint256 amountOut) {
         TransferHelper.safeApprove(tokenIn, address(swapRouter), amountIn);
 
         // Naively set amountOutMinimum to 0. In production, use an oracle or other data source to choose a safer value for amountOutMinimum.
@@ -54,31 +36,25 @@ contract Swap {
         // The call to `exactInputSingle` executes the swap.
         amountOut = swapRouter.exactInputSingle(params);
     }
+    function swapExactInputSingleMatic(uint256 amountIn, address to, address tokenIn,address tokenOut) internal returns (uint256 amountOut) {
+        TransferHelper.safeApprove(tokenIn, address(swapRouter), amountIn);
 
-    function convertMaticToLink(uint256 amountIn, address to, address tokenIn,address tokenOut) external payable {
-        
-        require(msg.value > 0, "Must pass non 0 ETH amount");
-        
-        
+        // Naively set amountOutMinimum to 0. In production, use an oracle or other data source to choose a safer value for amountOutMinimum.
+        // We also set the sqrtPriceLimitx96 to be 0 to ensure we swap our exact input amount.
         ISwapRouter.ExactInputSingleParams memory params =
             ISwapRouter.ExactInputSingleParams({
-            tokenIn: tokenIn,
-            tokenOut: tokenOut,
-            fee: poolFee,
-            recipient: to,
-            deadline: block.timestamp,
-            amountIn: amountIn,
-            amountOutMinimum: 0,
-            sqrtPriceLimitX96: 0
-        });
-        
-        swapRouter.exactInputSingle{ value: msg.value }(params);
-        
-        
-}
+                tokenIn: tokenIn,
+                tokenOut: tokenOut,
+                fee: 10000,
+                recipient: to,
+                deadline: block.timestamp,
+                amountIn: amountIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            });
 
-    /*TODO: 
-    * Funcion para obtener pools.
-    * Funcion para discriminar la mejor pool.
-    */
+        // The call to `exactInputSingle` executes the swap.
+        amountOut = swapRouter.exactInputSingle(params);
+    }
+    
 }

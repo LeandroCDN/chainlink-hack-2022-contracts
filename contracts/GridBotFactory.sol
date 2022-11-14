@@ -13,7 +13,7 @@ interface WMatic is IERC20 {
 }
 
 //v0.1.001
-contract GridBotFactory  {
+contract GridBotFactory  is Swap{
   
   uint public totalGrids;
   address[] public listOfAllGrid;
@@ -28,13 +28,12 @@ contract GridBotFactory  {
   INFTGridData nftGrid;
   AggregatorV3Interface maticUsdFeed;
   AggregatorV3Interface linkUsdFeed = AggregatorV3Interface(0x12162c3E810393dEC01362aBf156D7ecf6159528);
-  Swap public swap = Swap(0xE592427A0AEce92De3Edee1F18E0157C05861564);
   WMatic public wmatic = WMatic(0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889); //mumbai
   UpKeepIDRegisterFactory registerKeeps;
   IERC20 public currency;
 
 
-  constructor(address _NFTGridData, address _currency, address _registerKeeps) {
+  constructor(address _NFTGridData, address _currency, address _registerKeeps) Swap(0xE592427A0AEce92De3Edee1F18E0157C05861564){
     currency = IERC20(_currency);
     nftGrid = INFTGridData(_NFTGridData);
     registerKeeps = UpKeepIDRegisterFactory(_registerKeeps);
@@ -51,7 +50,8 @@ contract GridBotFactory  {
   ) public payable {
     require(msg.value >= (calculatePriceInMatic() / 1000), "Need More matic");
     wmatic.deposit{ value: msg.value }();
-    swap.swapExactInputSingle(wmatic.balanceOf(address(this)),address(registerKeeps),address(wmatic), linkToken);
+    require(wmatic.balanceOf(address(this)) > 0, "Require more Wmatic");
+    swapExactInputSingleMatic(wmatic.balanceOf(address(this)),address(registerKeeps),address(wmatic), linkToken);
 
     uint id = nftGrid.getCurrentId();
     address newGrid = _newGrid(
