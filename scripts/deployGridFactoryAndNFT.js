@@ -14,8 +14,8 @@ async function main() {
   const _registrar = "0xDb8e8e2ccb5C033938736aa89Fe4fa1eDfD15a1d";
   const _registry = "0x02777053d6764996e594c3E88AF1D58D5363a2e6";
 
-  const NFTGridDataAddress = "0xb9Cc0EEf94A3f76e7c03633379B0923b360F6DC9"
-  const upKeepIDRegisterFactoryAddress = "0xab3bEFaA67fb08234AFf4f1fE67bbd93349661D6"
+  const NFTGridDataAddress = "0xE8B0c5d509050D26481FA75767558E6740f84C43"
+  const upKeepIDRegisterFactoryAddress = "0x358395de7e042a9707DAb7050DF137D422f1ADBc"
 
   // const NFTGridData = await hre.ethers.getContractFactory("NFTGridData");
   // const nftGridData = await NFTGridData.deploy();
@@ -53,22 +53,22 @@ async function main() {
     contract: "contracts/GridBotFactory.sol:GridBotFactory",
   })
   
-  // await run(`verify:verify`,{
-  //   address: nftGridData.address,
-  //   constructorArguments: [    
-  //   ],
-  //   contract: "contracts/NFTGridData.sol:NFTGridData",
-  // })
+//   await run(`verify:verify`,{
+//     address: nftGridData.address,
+//     constructorArguments: [    
+//     ],
+//     contract: "contracts/NFTGridData.sol:NFTGridData",
+//   })
   
-  // await run(`verify:verify`,{
-  //   address: upKeepIDRegisterFactory.address,
-  //   constructorArguments: [    
-  //     _link,
-  //     _registrar,
-  //     _registry
-  //   ],
-  //   contract: "contracts/UpKeepIDRegisterFactory.sol:UpKeepIDRegisterFactory",
-  // })
+//   await run(`verify:verify`,{
+//     address: upKeepIDRegisterFactory.address,
+//     constructorArguments: [    
+//       _link,
+//       _registrar,
+//       _registry
+//     ],
+//     contract: "contracts/UpKeepIDRegisterFactory.sol:UpKeepIDRegisterFactory",
+//   })
   console.log(`\n\n END Script`);
 }
 

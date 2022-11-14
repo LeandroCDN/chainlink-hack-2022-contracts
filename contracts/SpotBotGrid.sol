@@ -41,7 +41,7 @@ contract SpotBotGrid is AccessControl, Swap {
 
   IERC20 stableCoin; // Need One Stable!
   IERC20 tradeableToken;
-  IERC721 nft = IERC721(0xb9Cc0EEf94A3f76e7c03633379B0923b360F6DC9); //PUT AND ADDRESS HERE!
+  IERC721 nft = IERC721(0xE8B0c5d509050D26481FA75767558E6740f84C43); //PUT AND ADDRESS HERE!
 
   AggregatorV3Interface dataFeed;
   userData data;
