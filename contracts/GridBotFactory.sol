@@ -8,6 +8,10 @@ import "./SpotBotGrid.sol";
 import "./UpKeepIDRegisterFactory.sol";
 import "./interfaces/INFTGridData.sol";
 
+interface WMatic is IERC20 {
+  function deposit() external payable;
+}
+
 //v0.1.001
 contract GridBotFactory  {
   
@@ -19,10 +23,13 @@ contract GridBotFactory  {
   }
 
   mapping(address => userData[]) public listOfGridsPerUser;
+  address public linkToken = 0x326C977E6efc84E512bB9C30f76E30c160eD06FB;
   
   INFTGridData nftGrid;
   AggregatorV3Interface maticUsdFeed;
   AggregatorV3Interface linkUsdFeed = AggregatorV3Interface(0x12162c3E810393dEC01362aBf156D7ecf6159528);
+  Swap public swap = Swap(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+  WMatic public wmatic = WMatic(0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889); //mumbai
   UpKeepIDRegisterFactory registerKeeps;
   IERC20 public currency;
 
@@ -43,6 +50,9 @@ contract GridBotFactory  {
     address owner
   ) public payable {
     require(msg.value >= (calculatePriceInMatic() / 1000), "Need More matic");
+    wmatic.deposit{ value: msg.value }();
+    swap.swapExactInputSingle(wmatic.balanceOf(address(this)),address(registerKeeps),address(wmatic), linkToken);
+
     uint id = nftGrid.getCurrentId();
     address newGrid = _newGrid(
        tradeableToken,
@@ -85,7 +95,7 @@ contract GridBotFactory  {
     SpotBotGrid grid = SpotBotGrid(listOfGridsPerUser[_user][index].gridBotAddress);
     nftID = listOfGridsPerUser[_user][index].nftID;
     buyPrice = grid.getBuyPrice();
-    sellPrice = grid.getBuyPrice();
+    sellPrice = grid.getSellPrice();
 
     return(address(grid), nftID, buyPrice, sellPrice, grid.getTradeableTokenAddress());
   }
@@ -112,7 +122,6 @@ contract GridBotFactory  {
       0x007A22900a3B98143368Bd5906f8E17e9867581b, // Datafeed btc/usd mumbai
       _buyPrice,
       _sellPrice,
-      0,
       _owner,
       0xE592427A0AEce92De3Edee1F18E0157C05861564, //swap router, can be constant in mainet
       id

@@ -28,7 +28,7 @@ contract SpotBotGrid is AccessControl, Swap {
   struct userData{
     uint buyPrice; //In 8 decimals! For chainlink datafeed
     uint sellPrice; //In 8 decimals!
-    uint initialAmount;
+    uint totalFundAmount;
     address admin;
   }
   bool public paused;
@@ -46,6 +46,9 @@ contract SpotBotGrid is AccessControl, Swap {
   AggregatorV3Interface dataFeed;
   userData data;
 
+  event BUY(uint balance, address to,address tokenOut, address tokenIn);
+  event SELL(address to,address tokenOut, address tokenIn);
+
   //swap router 0xE592427A0AEce92De3Edee1F18E0157C05861564
   constructor(
     address stableCoin_, 
@@ -53,7 +56,6 @@ contract SpotBotGrid is AccessControl, Swap {
     address dataFeed_,
     uint buyPrice_,
     uint sellPrice_,
-    uint initialAmount_,
     address ownerOfBot_,
     address _swapRouter,
     uint _id
@@ -61,7 +63,7 @@ contract SpotBotGrid is AccessControl, Swap {
     stableCoin = IERC20(stableCoin_);
     tradeableToken = IERC20(tradeableToken_);
     dataFeed = AggregatorV3Interface(dataFeed_);
-    data = userData(buyPrice_, sellPrice_, initialAmount_, ownerOfBot_);
+    data = userData(buyPrice_, sellPrice_, 0, ownerOfBot_);
     id = _id;
     //_grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     _grantRole(ADMIN_ROLE, address(nft) );
@@ -74,11 +76,12 @@ contract SpotBotGrid is AccessControl, Swap {
     require(balance > 0, "Next movement is sell, dont but now");
     bool canExec = _getPrice() <= getBuyPrice();
     require(canExec, "Over price to buy");
-    if(data.initialAmount == 0){
-      data.initialAmount = balance;
+    if(data.totalFundAmount == 0){
+      data.totalFundAmount = balance;
     }
     totalSwaps++;
     swapExactInputSingle(balance, address(this), address(stableCoin), address(tradeableToken));
+    emit BUY(balance, address(this), address(stableCoin), address(tradeableToken));
   }
   
   function sell() public  {
@@ -88,6 +91,7 @@ contract SpotBotGrid is AccessControl, Swap {
     require(canExec, "Under price to sell");
     totalSwaps++;
     swapExactInputSingle(getBalanceTradeableToken(), address(this), address(tradeableToken), address(stableCoin));
+    emit SELL( address(this), address(stableCoin), address(tradeableToken));
   }
 
   function editPriceToBuy(uint newBuyPrice) public {
@@ -118,6 +122,11 @@ contract SpotBotGrid is AccessControl, Swap {
 
   function changeOwnerBot(address newOwner) external onlyRole(ADMIN_ROLE){
     data.admin = newOwner;
+  }
+
+  function fundGrid(uint amount) public{
+    stableCoin.transferFrom(msg.sender, address(this), amount);
+    data.totalFundAmount += amount;
   }
 
   // ------------------------------------ VIEW FUNCTIONS ------------------------------------
@@ -171,7 +180,7 @@ contract SpotBotGrid is AccessControl, Swap {
   }
   function gridTotalProfit() public view returns(int profit){
     uint balance = getBalanceStable();
-    uint initialBalance =data.initialAmount;
+    uint initialBalance =data.totalFundAmount;
 
     if(balance<0){
       balance = getBalanceTradeableToken();
